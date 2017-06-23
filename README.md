@@ -1,6 +1,6 @@
 # gpx_report
-Tool to create GPX files from photos and HTML reports from GPX files
 
+[Читати Солов'їною](https://github.com/streamx3/gpx_report/blob/master/README_UA.md)
 
 This program can:
 - create .GPX file from a photo folder
@@ -15,7 +15,7 @@ This program can:
 ##### Satisfying dependencies on Linux:
 ```
 sudo -i
-aptitude install -y python3 python3-pip ffmpeg
+apt-get install -y python3 python3-pip ffmpeg
 ^D
 ```
 
@@ -30,7 +30,7 @@ brew install ffmpeg
 - Install ffmpeg from official website
 - add ffmpeg, python3 and pip3 to $PATH
 
-##### Common part
+##### Common part:
 Go to console and:
 ```
 pip3 install ntpath xmltodict pillow
