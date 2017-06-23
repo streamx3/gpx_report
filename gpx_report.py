@@ -239,40 +239,40 @@ def process_folder(folder):
         errexit('Something went wrong.')
 
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'hfg:d:', ['gpx=', 'dir=', 'help', 'force'])
-except getopt.GetoptError:
-    print(_usage)
-    sys.exit(2)
-
-for opt, arg in opts:
-    if opt in ('-h', '--help'):
-        print('Help:\n' + _usage)
-        sys.exit(0)
-    elif opt in ('-d', '--dir'):
-        opt_dir = arg
-    elif opt in ('-g', '--gpx'):
-        opt_gpx = arg
-    elif opt in ('-f', '--force'):
-        opt_force = True
-        if len(sys.argv) < 4:
-            errexit('Invalid input!')
-    else:
-        print(_usage)
-        errexit('Invalid option given: "' + opt + '"')
-
-
-if opt_gpx != '':
-    if not os.path.isfile(opt_gpx):
-        errexit('Invalid parameter! Not a file "' + opt_gpx + '"')
+if __name__ == '__main__':
     try:
-        pFile = open(opt_gpx, 'r')
-        pFile.close()
-    except OSError:
-        errexit('Invalid parameter! Can not open "' + opt_gpx + '"')
-    process_GPX(opt_gpx)
+        opts, args = getopt.getopt(sys.argv[1:], 'hfg:d:', ['gpx=', 'dir=', 'help', 'force'])
+    except getopt.GetoptError:
+        print(_usage)
+        sys.exit(2)
 
-if opt_dir != '':
-    if not os.path.isdir(opt_dir):
-        errexit('Invalid parameter! Not a folder "' + opt_dir + '"')
-    process_folder(opt_dir)
+    for opt, arg in opts:
+        if opt in ('-h', '--help'):
+            print('Help:\n' + _usage)
+            sys.exit(0)
+        elif opt in ('-d', '--dir'):
+            opt_dir = arg
+        elif opt in ('-g', '--gpx'):
+            opt_gpx = arg
+        elif opt in ('-f', '--force'):
+            opt_force = True
+        else:
+            print(_usage)
+            errexit('Invalid option given: "' + opt + '"')
+    if opt_dir == '' and opt_gpx == '':
+        errexit('use either -g or -d for input!')
+
+    if opt_gpx != '':
+        if not os.path.isfile(opt_gpx):
+            errexit('Invalid parameter! Not a file "' + opt_gpx + '"')
+        try:
+            pFile = open(opt_gpx, 'r')
+            pFile.close()
+        except OSError:
+            errexit('Invalid parameter! Can not open "' + opt_gpx + '"')
+        process_GPX(opt_gpx)
+
+    if opt_dir != '':
+        if not os.path.isdir(opt_dir):
+            errexit('Invalid parameter! Not a folder "' + opt_dir + '"')
+        process_folder(opt_dir)
