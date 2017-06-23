@@ -202,10 +202,11 @@ def process_folder(folder):
                     exif_data = get_exif_data(img)
                     lat, lon = get_lat_lon(exif_data)
 
-                    # print(lat, lon)
+                    if lon is None or lat is None:
+                        continue
                     lat = round(lat, 7)
                     lon = round(lon, 7)
-                    # print(lat, lon)
+
                     wpts.append({'lat': lat, 'lon': lon, 'time': exif_data['time'], 'fname': fname})
     if len(wpts) < 1:
         errexit('Could not found photos with GPS tags!')
