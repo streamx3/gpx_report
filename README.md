@@ -3,8 +3,8 @@
 [Читати Солов'їною](https://github.com/streamx3/gpx_report/blob/master/README_UA.md)
 
 This program can:
-- create .GPX file from a photo folder
-- create HTML report from the .GPX file
+- create a .GPX file from a photo folder
+- create an HTML report from the .GPX file
 
 #### Dependencies:
 - ntpath

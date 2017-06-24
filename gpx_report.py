@@ -107,15 +107,36 @@ def get_lat_lon(exif_data):
 
 # Stolen ^
 
+def gen_tumbnail(dest_dir, src_file):
+    print('Making a thumbnail for: ' + path_leaf(src_file))
+    dest_fname = os.path.join(dest_dir, path_leaf(src_file))
+    im = Image.open(src_file)
+    im.thumbnail((100, 100))
+    try:
+        im.save(dest_fname)
+    except KeyError:
+        errexit('Image extension issue. If you\'re your images are valid -- report to streamx3@gmail.com')
+    except IOError:
+        errexit('Coudn\'t write thumbnail :"' + dest_fname + '"')
+    except:
+        errexit('Unexpected error. Report to streamx3@gmail.com')
+    return im.size
+
 
 def process_GPX(filename):
     wpts = []
     dirname = os.path.dirname(filename)
+    tumbnails_dir = os.path.join(dirname, 'thumbnails')
+    if not os.path.exists(tumbnails_dir):
+        os.makedirs(tumbnails_dir)
 
-    def makeRow(id, wpt):
+    def make_row(id, wpt):
         rv = '<tr><td>' + str(id) + '</td><td>' + wpt['lat'] + '</td><td>' + wpt['lon'] + '</td>' + '<td>' + wpt['ele'] + '</td>'
         if wpt['name'] == 'Photo':
-            rv += '<td><a href="' + wpt['link'] + '"><img src="' + wpt['link'] + '" height="32"></td></a>'
+            thumb_fname = 'thumbnails/' + wpt['link']
+            _size = gen_tumbnail(tumbnails_dir, os.path.join(dirname, wpt['link']))
+            rv += '<td><a href="' + wpt['link'] + '"><img height="' + str(_size[1]) + '" width="' + str(_size[0]) + \
+                  '" src="' + thumb_fname + '" height="32"></td></a>'
         else:
             auoname = os.path.join(dirname, wpt['link'])  # Audio Old Name
             aunname = auoname[:-4] + 'mp3'                # Audio New Name
@@ -131,12 +152,13 @@ def process_GPX(filename):
 
     with open(filename, 'r') as pFile:
         od1 = xmltodict.parse(pFile.read())
-        print(od1)
-        # print()
+        # print(od1)
         if 'gpx' in od1 and 'wpt' in od1['gpx']:
             print('Found some waypoints...')
             for wp in od1['gpx']['wpt']:
                 if wp['name'] in ('Voice recording', 'Photo'):
+                    if 'ele' not in wp:
+                        wp['ele'] = 'N/A'  # I don't expect to find Altitude in regular files. Let me know if I'm wrong.
                     wpts.append({'lat': wp['@lat'], 'lon': wp['@lon'], 'ele': wp['ele'],
                                  'name': wp['name'], 'link': wp['link']['text']})
     # print(wpts)
@@ -149,29 +171,37 @@ def process_GPX(filename):
     print('Will try to write index.html ...')
     if os.path.exists(ofname) and os.path.isfile(ofname):
         if opt_force:
-            print('Overwriting...')
+            print('Overwriting an HTML...')
         else:
             errexit('Destination HTML file exists! -f to overwrite!')
     try:
         pFile = open(ofname, 'w')
     except OSError:
         errexit('Could not create file for writing: "' + ofname + '"')
-    head = """
+    html = """
     <html><head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <!-- Latest compiled and minified CSS -->
     <title>GPX</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
     integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-    crossorigin="anonymous"></head>"""
-    head += '<body>'
-    head += '<div class="panel panel-default"><div class="panel-heading">Generated from file "' + \
+    crossorigin="anonymous">
+    <style>
+    .table > tbody > tr > td {
+            vertical-align: middle;
+    }
+    </style>
+    </head>"""
+    html += '<body>'
+    html += '<div class="panel panel-default"><div class="panel-heading">Generated from file "' + \
             path_leaf(filename) + '"</div><table class="table">'
-    pFile.write(head)
-    pFile.write('<tr><td>No</td><td>Latitude</td><td>Longitude</td><td>Elevation</td><td>Media</td></tr>')
+    pFile.write(html)
+    pFile.write('<thead><tr>' +
+                '<th>No</th><th>Latitude</th><th>Longitude</th><th>Altitude</th><th>Media</th>' +
+                '</tr></thead>')
 
     for i in range(len(wpts)):
-        pFile.write(makeRow(i, wpts[i]))
+        pFile.write(make_row(i, wpts[i]))
     pFile.write('</div></table></body></html>')
 
 
@@ -180,9 +210,10 @@ def process_folder(folder):
     exts = ['jpg', 'JPG', 'jpeg', 'JPEG']
 
     def format_waypoint(wpt):
-                                                                             # '\n\t\t<ele>227.0</ele>' + \ #TODO FIXME
-        rv = '\t<wpt lat="' + str(wpt['lat']) + '" lon="' + str(wpt['lon']) + '">' + \
-            '\n\t\t<time>' + wpt['time'] + '</time>' + \
+        rv = '\t<wpt lat="' + str(wpt['lat']) + '" lon="' + str(wpt['lon']) + '">'
+        if 'ele' in wpt and wpt['ele'] != 'N/A':
+            rv += '\n\t\t<ele></ele>'
+        rv += '\n\t\t<time>' + wpt['time'] + '</time>' + \
             '\n\t\t<name><![CDATA[Photo]]></name>' + \
             '\n\t\t<link href="' + wpt['fname'] + '">' + \
             '\n\t\t\t<text>' + wpt['fname'] + '</text>' + \
@@ -222,7 +253,7 @@ def process_folder(folder):
     if os.path.exists(gpx_fname):
         if os.path.isfile(gpx_fname):
             if opt_force:
-                print('Overwriting existing GPX file...')
+                print('Overwriting the existing GPX file...')
             else:
                 errexit('Target GPX file exists! -f to overwrite!')
         else:
